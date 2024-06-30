@@ -24,12 +24,12 @@ contract TokenDegen is ERC20, Ownable, ERC20Burnable {
     // Enum for collectible items
     enum Collectibles {Normal, Average, Special, Extinct, Legend}
 
-    struct Buyer {
-        address buyerAddress;
+    struct Customer {
+        address customerAddress;
         uint quantity;
     }
     // Queue for buyers wanting to purchase TokenDegen
-    Buyer[] public buyerQueue;
+    Customer[] public customerQueue;
 
     struct UserCollectibles {
         uint normal;
@@ -42,18 +42,18 @@ contract TokenDegen is ERC20, Ownable, ERC20Burnable {
     // Mapping to store redeemed collectibles
     mapping(address => UserCollectibles) public userCollectibles;
 
-    function purchaseTokens(address _buyerAddress, uint _quantity) public {
-        buyerQueue.push(Buyer({buyerAddress: _buyerAddress, quantity: _quantity}));
+    function purchaseTokens(address _customerAddress, uint _quantity) public {
+        customerQueue.push(Customer({customerAddress: _customerAddress, quantity: _quantity}));
     }
 
     // Mint tokens for buyers in the queue
     function mintTokens() public onlyOwner {
         // Loop to mint tokens for buyers in the queue
-        while (buyerQueue.length != 0) {
-            uint index = buyerQueue.length - 1;
-            if (buyerQueue[index].buyerAddress != address(0)) { // Check for non-zero address
-                _mint(buyerQueue[index].buyerAddress, buyerQueue[index].quantity);
-                buyerQueue.pop();
+        while (customerQueue.length != 0) {
+            uint index = customerQueue.length - 1;
+            if (customerQueue[index].customerAddress != address(0)) { // Check for non-zero address
+                _mint(customerQueue[index].customerAddress, customerQueue[index].quantity);
+                customerQueue.pop();
             }
         }
     }
