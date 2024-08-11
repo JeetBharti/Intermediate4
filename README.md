@@ -37,7 +37,6 @@ To use this contract, you'll need to use Remix, an online Solidity IDE. Follow t
 
 ```solidity
 // SPDX-License-Identifier: MIT
-
 /*
 Your task is to create a ERC20 token and deploy it on the Avalanche network for Degen Gaming.
  The smart contract should have the following functionality:
@@ -49,96 +48,118 @@ Your task is to create a ERC20 token and deploy it on the Avalanche network for 
 5) Burning tokens: Anyone should be able to burn tokens, that they own, that are no longer needed.
 */
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+contract CryptoToken is ERC20, Ownable {
 
-contract TokenDegen is ERC20, Ownable, ERC20Burnable {
-
-    constructor() ERC20("JEET", "JT") Ownable(msg.sender) {}
-
-    // Enum for collectible items
-    enum Collectibles {Normal, Average, Special, Extinct, Legend}
-
-    struct Customer {
-        address customerAddress;
-        uint quantity;
-    }
-    // Queue for buyers wanting to purchase TokenDegen
-    Customer[] public customerQueue;
-
-    struct UserCollectibles {
-        uint normal;
-        uint average;
-        uint special;
-        uint extinct;
-        uint legend;
+    constructor() ERC20("Crypto", "CRP") Ownable() {
     }
 
-    // Mapping to store redeemed collectibles
-    mapping(address => UserCollectibles) public userCollectibles;
+    event AssetTransfer(address indexed from, address indexed to, uint256 amount);
+    event ItemsExchanged(address indexed user, uint256 itemAmount, uint256 tokensSpent);
 
-    function purchaseTokens(address _customerAddress, uint _quantity) public {
-        customerQueue.push(Customer({customerAddress: _customerAddress, quantity: _quantity}));
+    uint256 private totalMinted;
+
+    struct ExchangedItem {
+        uint256 itemCount;
+        uint256 tokensUsed;
     }
 
-    // Mint tokens for buyers in the queue
-    function mintTokens() public onlyOwner {
-        // Loop to mint tokens for buyers in the queue
-        while (customerQueue.length != 0) {
-            uint index = customerQueue.length - 1;
-            if (customerQueue[index].customerAddress != address(0)) { // Check for non-zero address
-                _mint(customerQueue[index].customerAddress, customerQueue[index].quantity);
-                customerQueue.pop();
-            }
+    mapping(address => ExchangedItem[]) private userExchanges;
+
+    uint256 public itemTokenPrice = 1; // 1 CRP token per item by default
+
+    function totalSupply() public view override returns (uint256) {
+        return totalMinted;
+    }
+
+    function generateTokens(address recipient, uint256 quantity) public onlyOwner {
+        require(recipient != address(0), "Error: Cannot mint to zero address");
+        _mint(recipient, quantity);
+        totalMinted += quantity;
+        emit AssetTransfer(address(0), recipient, quantity);
+    }
+
+    function destroyTokens(address holder, uint256 quantity) public {
+        require(holder != address(0), "Error: Cannot burn from zero address");
+        _burn(holder, quantity);
+        totalMinted -= quantity;
+        emit AssetTransfer(holder, address(0), quantity);
+    }
+
+    function transferAssets(address from, address to, uint256 quantity) public returns (bool) {
+        require(from != address(0), "Error: Invalid sender");
+        require(to != address(0), "Error: Invalid recipient");
+        _transfer(from, to, quantity);
+        emit AssetTransfer(from, to, quantity);
+        return true;
+    }
+
+    function getBalance(address account) public view returns (uint256) {
+        require(account != address(0), "Error: Invalid address");
+        return balanceOf(account);
+    }
+
+    function exchangeTokensForItems(uint256 itemCount) public {
+        require(itemCount > 0, "Error: Must exchange at least one item");
+        uint256 requiredTokens = itemCount * itemTokenPrice;
+        require(balanceOf(_msgSender()) >= requiredTokens, "Error: Insufficient balance");
+
+        _burn(_msgSender(), requiredTokens);
+
+        userExchanges[_msgSender()].push(ExchangedItem({
+            itemCount: itemCount,
+            tokensUsed: requiredTokens
+        }));
+
+        emit ItemsExchanged(_msgSender(), itemCount, requiredTokens);
+    }
+
+    function getUserExchanges(address user) public view returns (ExchangedItem[] memory) {
+        require(user != address(0), "Error: Invalid address");
+        return userExchanges[user];
+    }
+
+    function displayExchanges(address user) public view returns (string memory) {
+        require(user != address(0), "Error: Invalid address");
+        ExchangedItem[] memory exchanges = userExchanges[user];
+        require(exchanges.length > 0, "Error: No exchanges found");
+
+        string memory output = "";
+        for (uint256 i = 0; i < exchanges.length; i++) {
+            output = string(abi.encodePacked(
+                output,
+                "Exchange ", uintToStr(i + 1), ": ",
+                "Items: ", uintToStr(exchanges[i].itemCount),
+                " Tokens Used: ", uintToStr(exchanges[i].tokensUsed),
+                "\n"
+            ));
         }
-    }
-    
-    // Transfer tokens to another user
-    function transferTokens(address _recipient, uint _quantity) public {
-        require(_quantity <= balanceOf(msg.sender), "Insufficient balance for token to transfer");
-        _transfer(msg.sender, _recipient, _quantity);
+        return output;
     }
 
-    // Redeem different collectibles
-    function redeemCollectibles(Collectibles _collectible) public {
-        if (_collectible == Collectibles.Normal) {
-            require(balanceOf(msg.sender) >= 15, "Insufficient balance for token to redeem");
-            userCollectibles[msg.sender].normal += 1;
-            burn(15);
-        } else if (_collectible == Collectibles.Average) {
-            require(balanceOf(msg.sender) >= 25, "Insufficient balance");
-            userCollectibles[msg.sender].average += 1;
-            burn(25);
-        } else if (_collectible == Collectibles.Special) {
-            require(balanceOf(msg.sender) >= 35, "Insufficient balance");
-            userCollectibles[msg.sender].special += 1;
-            burn(35);
-        } else if (_collectible == Collectibles.Extinct) {
-            require(balanceOf(msg.sender) >= 45, "Insufficient balance");
-            userCollectibles[msg.sender].extinct += 1;
-            burn(45);
-        } else if (_collectible == Collectibles.Legend) {
-            require(balanceOf(msg.sender) >= 60, "Insufficient balance");
-            userCollectibles[msg.sender].legend += 1;
-            burn(60);
-        } else {
-            revert("Invalid collectible selected");
+    function uintToStr(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
         }
-    }
-
-    // Function to burn tokens
-    function burnTokens(address _holder, uint _quantity) public {
-        _burn(_holder, _quantity);
-    }
-
-    // Function to check the balance of tokens
-    function getBalance() public view returns (uint) {
-        return balanceOf(msg.sender);
+        uint256 digitsCount;
+        uint256 tempValue = value;
+        while (tempValue != 0) {
+            digitsCount++;
+            tempValue /= 10;
+        }
+        bytes memory buffer = new bytes(digitsCount);
+        while (value != 0) {
+            digitsCount -= 1;
+            buffer[digitsCount] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }
+
 ```
 ## Help
 
