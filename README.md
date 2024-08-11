@@ -1,10 +1,10 @@
-# DegenToken
+# CryptoToken
 
 ## Overview
-DegenToken is an ERC20 token deployed on the Avalanche network for Degen Gaming. It supports in-game rewards, item exchanges, and token management for players.
+CryptoToken is an ERC20 token deployed on the Avalanche network for Degen Gaming. It supports in-game rewards, item exchanges, and token management for players.
 
 ## Description
-DegenToken is specifically designed for Degen Gaming on the Avalanche network. The smart contract facilitates minting, transferring, redeeming, balance checking, and burning of tokens. Only the owner has the authority to mint new tokens, ensuring controlled distribution for rewards. Players can use the tokens to exchange for in-game items, transfer tokens to other players, and manage their token balances. Additionally, the contract includes functionality for burning tokens that are no longer needed.
+CryptoToken is specifically designed for Degen Gaming on the Avalanche network. The smart contract facilitates minting, transferring, redeeming, balance checking, and burning of tokens. Only the owner has the authority to mint new tokens, ensuring controlled distribution for rewards. Players can use the tokens to exchange for in-game items, transfer tokens to other players, and manage their token balances. Additionally, the contract includes functionality for burning tokens that are no longer needed.
 
 ## Getting Started
 
