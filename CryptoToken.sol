@@ -10,13 +10,14 @@ Your task is to create a ERC20 token and deploy it on the Avalanche network for 
 5) Burning tokens: Anyone should be able to burn tokens, that they own, that are no longer needed.
 */
 
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 contract CryptoToken is ERC20, Ownable {
 
-    constructor() ERC20("Crypto", "CRP") Ownable() {
+    constructor() ERC20("Crypto", "CRP") Ownable(msg.sender) {
     }
 
     event AssetTransfer(address indexed from, address indexed to, uint256 amount);
